@@ -8,7 +8,7 @@ import sys
 from config import settings
 
 boostyProfileTemplate = "https://boosty.to/{}"
-boostyPostTemplate = "https://boosty.to/chellofan/posts/{}"
+boostyPostTemplate = "https://boosty.to/{}/posts/{}"
 boostyJsonTemplate = "https://api.boosty.to/v1/blog/{}/post/?limit=100&comments_limit=2&reply_limit=1"
 
 def start_crawler(username: str):
@@ -29,7 +29,7 @@ def start_crawler(username: str):
             print(f"post {post_idx} of {len(posts)} ({post['id']})")
             os.makedirs(f'posts/{username}/{post_idx}_{post["id"]}', exist_ok=True)
 
-            url = boostyPostTemplate.format(post['id'])
+            url = boostyPostTemplate.format(username, post['id'])
             response = client.get(url)
             if response.status_code != 200:
                 print(f"!!! {response.status_code=} {response.text}")
