@@ -21,13 +21,12 @@ def start_crawler(username: str):
     ) as client:
         url = boostyJsonTemplate.format(username)
         response = client.get(url)
-        posts = json.loads(response.text)['data']
+        post_list = json.loads(response.text)['data']
 
         os.makedirs(f'posts/{username}', exist_ok=True)
-        # TODO: post_idx будет другим, если сделают новый пост. переделать.
-        for post_idx, post in enumerate(posts):
-            print(f"post {post_idx} of {len(posts)} ({post['id']})")
-            os.makedirs(f'posts/{username}/{post_idx}_{post["id"]}', exist_ok=True)
+        for post_idx, post in enumerate(post_list):
+            print(f"post {post_idx} of {len(post_list)} ({post['id']})")
+            os.makedirs(f'posts/{username}/{post["id"]}', exist_ok=True)
 
             url = boostyPostTemplate.format(username, post['id'])
             response = client.get(url)
@@ -41,15 +40,19 @@ def start_crawler(username: str):
             script_tag = soup.find('script', {'type': 'text/plain', 'id': 'initial-state'})
 
             if not script_tag:
+                print("!!! No script tag")
                 continue
 
             initial_state = json.loads(script_tag.string)
             posts = initial_state['posts']['postsList']['data']['posts']
-            post = posts[0]
-            data = post['data']
+            post_info = posts[0]
+            data = post_info['data']
 
-            with open(f'posts/{username}/{post_idx}_{post["id"]}/metadata.json', 'w') as f:
-                json.dump(post, f)
+            with open(f'posts/{username}/{post["id"]}/metadata.json', 'w') as f:
+                json.dump(post_info, f)
+
+            with open(f'posts/{username}/{post["id"]}/dump.html', 'w') as f:
+                f.write(html_content)
 
             time.sleep(1)
 
@@ -59,14 +62,13 @@ def start_crawler(username: str):
                     print(f"!!! {attachment}")
                     continue
 
-                if os.path.exists(f'posts/{username}/{post_idx}_{post["id"]}/{attachment["id"]}.jpg'):
+                if os.path.exists(f'posts/{username}/{post["id"]}/{attachment["id"]}.jpg'):
                     continue
 
                 response = client.get(f"https://images.boosty.to/image/{attachment['id']}")
-                with open(f'posts/{username}/{post_idx}_{post["id"]}/{attachment["id"]}.jpg', 'wb') as f:
+                with open(f'posts/{username}/{post["id"]}/{attachment["id"]}.jpg', 'wb') as f:
                     f.write(response.content)
 
                 time.sleep(1)
-
 
 start_crawler(username=sys.argv[1])
